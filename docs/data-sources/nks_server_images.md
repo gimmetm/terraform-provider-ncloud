@@ -10,7 +10,7 @@ data "ncloud_nks_server_images" "images" {}
 data "ncloud_nks_server_images" "ubuntu20" {
   filter {
     name = "label"
-    values = ["ubuntu-20.04-64-server"]
+    values = ["ubuntu-20.04"]
     regex = true
   }
 }
@@ -21,6 +21,7 @@ data "ncloud_nks_server_images" "ubuntu20" {
 
 The following arguments are supported:
 
+* `hypervisor_code` - (Optional) Hypervisor code. (Default `XEN`)
 * `filter` - (Optional) Custom filter block as described below.
   * `name` - (Required) The name of the field to filter by.
   * `values` - (Required) Set of values that are accepted for the given field.

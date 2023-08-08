@@ -90,6 +90,11 @@ func SetRegionCache(client *NcloudAPIClient, supportVPC bool) error {
 	var err error
 	if supportVPC {
 		regionList, err = getVpcRegionList(client)
+		//regionList = append(regionList, &Region{
+		//	RegionNo:   ncloud.String("1"),
+		//	RegionCode: ncloud.String("KR"),
+		//	RegionName: ncloud.String("KR"),
+		//})
 	} else {
 		regionList, err = getClassicRegionList(client)
 	}
