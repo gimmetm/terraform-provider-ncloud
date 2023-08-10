@@ -73,6 +73,65 @@ func TestAccResourceNcloudNKSNodePool_basic_KVM(t *testing.T) {
 	})
 }
 
+func TestAccResourceNcloudNKSNodePool_Update_XEN(t *testing.T) {
+	var nodePool vnks.NodePool
+
+	clusterName := fmt.Sprintf("m3-%s", GetTestClusterName())
+	resourceName := "ncloud_nks_node_pool.node_pool"
+
+	nksInfo, err := getNKSTestInfo("XEN")
+	if err != nil {
+		t.Error(err)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:     func() { TestAccPreCheck(t) },
+		Providers:    GetTestAccProviders(true),
+		CheckDestroy: testAccCheckNKSNodePoolDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceNcloudNKSNodePoolConfig(clusterName, TF_TEST_NKS_LOGIN_KEY, nksInfo, 1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckNKSNodePoolExists(resourceName, &nodePool),
+				),
+				Destroy: false,
+			},
+			{
+				Config: testAccResourceNcloudNKSNodePoolConfigUpdateAll(clusterName, TF_TEST_NKS_LOGIN_KEY, nksInfo, 2),
+				Check:  testAccResourceNcloudNKSNodePoolUpdateAllCheck(resourceName, clusterName, nksInfo),
+			},
+		},
+	})
+}
+
+func TestAccResourceNcloudNKSNodePool_Update_KVM(t *testing.T) {
+	var nodePool vnks.NodePool
+	clusterName := fmt.Sprintf("m3-%s", GetTestClusterName())
+	resourceName := "ncloud_nks_node_pool.node_pool"
+
+	nksInfo, err := getNKSTestInfo("KVM")
+	if err != nil {
+		t.Error(err)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:     func() { TestAccPreCheck(t) },
+		Providers:    GetTestAccProviders(true),
+		CheckDestroy: testAccCheckNKSNodePoolDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceNcloudNKSNodePoolConfig(clusterName, TF_TEST_NKS_LOGIN_KEY, nksInfo, 1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckNKSNodePoolExists(resourceName, &nodePool),
+				),
+				Destroy: false,
+			},
+			{
+				Config: testAccResourceNcloudNKSNodePoolConfigUpdateAll(clusterName, TF_TEST_NKS_LOGIN_KEY, nksInfo, 2),
+				Check:  testAccResourceNcloudNKSNodePoolUpdateAllCheck(resourceName, clusterName, nksInfo),
+			},
+		},
+	})
+}
+
 func TestAccResourceNcloudNKSNodePool_publicNetwork_XEN(t *testing.T) {
 	clusterName := GetTestClusterName()
 	resourceName := "ncloud_nks_node_pool.node_pool"
@@ -110,65 +169,6 @@ func TestAccResourceNcloudNKSNodePool_publicNetwork_KVM(t *testing.T) {
 			{
 				Config: testAccResourceNcloudNKSNodePoolConfigPublicNetwork(clusterName, TF_TEST_NKS_LOGIN_KEY, nksInfo, 1),
 				Check:  testAccResourceNcloudNKSNodePoolPublicNetworkCheck(resourceName, clusterName),
-			},
-		},
-	})
-}
-
-func TestAccResourceNcloudNKSNodePool_updateAll_XEN(t *testing.T) {
-	var nodePool vnks.NodePool
-
-	clusterName := fmt.Sprintf("m3-%s", GetTestClusterName())
-	resourceName := "ncloud_nks_node_pool.node_pool"
-
-	nksInfo, err := getNKSTestInfo("XEN")
-	if err != nil {
-		t.Error(err)
-	}
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNKSNodePoolDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccResourceNcloudNKSNodePoolConfig(clusterName, TF_TEST_NKS_LOGIN_KEY, nksInfo, 1),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNKSNodePoolExists(resourceName, &nodePool),
-				),
-				Destroy: false,
-			},
-			{
-				Config: testAccResourceNcloudNKSNodePoolConfigUpdateAll(clusterName, TF_TEST_NKS_LOGIN_KEY, nksInfo, 2),
-				Check:  testAccResourceNcloudNKSNodePoolUpdateAllCheck(resourceName, clusterName, nksInfo),
-			},
-		},
-	})
-}
-
-func TestAccResourceNcloudNKSNodePool_updateAll_KVM(t *testing.T) {
-	var nodePool vnks.NodePool
-	clusterName := fmt.Sprintf("m3-%s", GetTestClusterName())
-	resourceName := "ncloud_nks_node_pool.node_pool"
-
-	nksInfo, err := getNKSTestInfo("KVM")
-	if err != nil {
-		t.Error(err)
-	}
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNKSNodePoolDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccResourceNcloudNKSNodePoolConfig(clusterName, TF_TEST_NKS_LOGIN_KEY, nksInfo, 1),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNKSNodePoolExists(resourceName, &nodePool),
-				),
-				Destroy: false,
-			},
-			{
-				Config: testAccResourceNcloudNKSNodePoolConfigUpdateAll(clusterName, TF_TEST_NKS_LOGIN_KEY, nksInfo, 2),
-				Check:  testAccResourceNcloudNKSNodePoolUpdateAllCheck(resourceName, clusterName, nksInfo),
 			},
 		},
 	})
@@ -337,7 +337,7 @@ resource "ncloud_nks_node_pool" "node_pool" {
   }
 
   software_code = data.ncloud_nks_server_images.image.images.0.value
-`, name, nksInfo.ClusterType, nksInfo.K8sVersion, loginKeyName, *nksInfo.PrivateLbSubnetList[0].SubnetNo, nksInfo.HypervisorCode, *nksInfo.PublicLbSubnetList[0].SubnetNo, *nksInfo.Vpc.VpcNo, nksInfo.Region, nodeCount))
+`, name, nksInfo.ClusterType, nksInfo.K8sVersion, loginKeyName, *nksInfo.PrivateLbSubnetList[0].SubnetNo, nksInfo.HypervisorCode, *nksInfo.PublicSubnetList[0].SubnetNo, *nksInfo.Vpc.VpcNo, nksInfo.Region, nodeCount))
 	if nksInfo.HypervisorCode == "KVM" {
 		b.WriteString(`
   server_spec_code = data.ncloud_nks_server_products.product.products.0.value
