@@ -67,14 +67,11 @@ resource "ncloud_nks_cluster" "cluster" {
 The following arguments are supported:
 
 * `name` - (Required) Cluster name.
-* `hypervisor_code` - (Optional) Hypervisor code. `XEN`(Default), `KVM`, `RHV`
+* `hypervisor_code` - (Optional) Hypervisor code. `XEN`(Default), `RHV`
 * `cluster_type` -(Required) Cluster type. `Maximum number of nodes`
   * `XEN` / `RHV` 
     * 10 ea : `SVR.VNKS.STAND.C002.M008.NET.SSD.B050.G002`
     * 50 ea : `SVR.VNKS.STAND.C004.M016.NET.SSD.B050.G002`
-  * `KVM`
-    * 10 ea : `SVR.VNKS.STAND.C002.M008.G003`
-    * 50 ea : `SVR.VNKS.STAND.C004.M016.G003`
 * `login_key_name` - (Required) Login key name.
 * `zone` - (Required) zone Code.
 * `vpc_no` - (Required) VPC No.
