@@ -15,7 +15,6 @@ import (
 
 	. "github.com/terraform-providers/terraform-provider-ncloud/internal/common"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/conn"
-	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/launchconfiguration"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/vpc"
 	. "github.com/terraform-providers/terraform-provider-ncloud/internal/verify"
 )
@@ -38,7 +37,7 @@ func ResourceNcloudAutoScalingGroup() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Computed:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.StringLenBetween(0, 255)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 255)),
 				ForceNew:         true,
 			},
 			"launch_configuration_no": {
@@ -49,35 +48,35 @@ func ResourceNcloudAutoScalingGroup() *schema.Resource {
 				Type:             schema.TypeInt,
 				Optional:         true,
 				Computed:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.IntBetween(0, 30)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 30)),
 			},
 			"min_size": {
 				Type:             schema.TypeInt,
 				Required:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.IntBetween(0, 30)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 30)),
 			},
 			"max_size": {
 				Type:             schema.TypeInt,
 				Required:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.IntBetween(0, 30)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 30)),
 			},
 			"default_cooldown": {
 				Type:             schema.TypeInt,
 				Optional:         true,
-				Computed:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.IntBetween(0, 2147483647)),
+				Default:          300,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 2147483647)),
 			},
 			"health_check_type_code": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Computed:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.StringInSlice([]string{"SVR", "LOADB"}, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"SVR", "LOADB"}, false)),
 			},
 			"health_check_grace_period": {
 				Type:             schema.TypeInt,
 				Optional:         true,
-				Computed:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.IntBetween(0, 2147483647)),
+				Default:          300,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 2147483647)),
 			},
 			"server_instance_no_list": {
 				Type:     schema.TypeList,
@@ -88,12 +87,15 @@ func ResourceNcloudAutoScalingGroup() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "10m",
-				ValidateDiagFunc: ToDiagFunc(ValidateParseDuration),
+				ValidateDiagFunc: validation.ToDiagFunc(ValidateParseDuration),
 			},
 			"zone_no_list": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				},
 			},
 			"vpc_no": {
 				Type:     schema.TypeString,
@@ -107,7 +109,10 @@ func ResourceNcloudAutoScalingGroup() *schema.Resource {
 			"access_control_group_no_list": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				},
 				ForceNew: true,
 			},
 			"target_group_list": {
@@ -185,8 +190,8 @@ func createVpcAutoScalingGroup(d *schema.ResourceData, config *conn.ProviderConf
 		MinSize:                  ncloud.Int32(int32(d.Get("min_size").(int))),
 		MaxSize:                  ncloud.Int32(int32(d.Get("max_size").(int))),
 		DesiredCapacity:          Int32PtrOrNil(d.GetOk("desired_capacity")),
-		DefaultCoolDown:          Int32PtrOrNil(d.GetOk("default_cooldown")),
-		HealthCheckGracePeriod:   Int32PtrOrNil(d.GetOk("health_check_grace_period")),
+		DefaultCoolDown:          ncloud.Int32(int32(d.Get("default_cooldown").(int))),
+		HealthCheckGracePeriod:   ncloud.Int32(int32(d.Get("health_check_grace_period").(int))),
 		HealthCheckTypeCode:      StringPtrOrNil(d.GetOk("health_check_type_code")),
 		TargetGroupNoList:        StringListPtrOrNil(d.GetOk("target_group_list")),
 	}
@@ -204,7 +209,7 @@ func createClassicAutoScalingGroup(d *schema.ResourceData, config *conn.Provider
 		return nil, ErrorRequiredArgOnClassic("zone_no_list")
 	}
 	// TODO : Zero value 핸들링
-	l, err := launchconfiguration.GetClassicLaunchConfigurationByNo(StringPtrOrNil(d.GetOk("launch_configuration_no")), config)
+	l, err := GetClassicLaunchConfigurationByNo(StringPtrOrNil(d.GetOk("launch_configuration_no")), config)
 	if err != nil {
 		return nil, err
 	}
@@ -214,9 +219,9 @@ func createClassicAutoScalingGroup(d *schema.ResourceData, config *conn.Provider
 		DesiredCapacity:         Int32PtrOrNil(d.GetOk("desired_capacity")),
 		MinSize:                 ncloud.Int32(int32(d.Get("min_size").(int))),
 		MaxSize:                 ncloud.Int32(int32(d.Get("max_size").(int))),
-		DefaultCooldown:         Int32PtrOrNil(d.GetOk("default_cooldown")),
+		DefaultCooldown:         ncloud.Int32(int32(d.Get("default_cooldown").(int))),
 		//LoadBalancerNameList:
-		HealthCheckGracePeriod: Int32PtrOrNil(d.GetOk("health_check_grace_period")),
+		HealthCheckGracePeriod: ncloud.Int32(int32(d.Get("health_check_grace_period").(int))),
 		HealthCheckTypeCode:    StringPtrOrNil(d.GetOk("health_check_type_code")),
 		ZoneNoList:             ExpandStringInterfaceList(d.Get("zone_no_list").([]interface{})),
 	}
@@ -441,7 +446,7 @@ func changeClassicAutoScalingGroup(d *schema.ResourceData, config *conn.Provider
 	}
 
 	if d.HasChange("launch_configuration_no") {
-		launchConfiguration, err := launchconfiguration.GetClassicLaunchConfigurationByNo(ncloud.String(d.Get("launch_configuration_no").(string)), config)
+		launchConfiguration, err := GetClassicLaunchConfigurationByNo(ncloud.String(d.Get("launch_configuration_no").(string)), config)
 		if err != nil {
 			return err
 		}
@@ -753,6 +758,10 @@ func waitForAutoScalingGroupCapacity(d *schema.ResourceData, config *conn.Provid
 func waitForVpcAutoScalingGroupCapacity(d *schema.ResourceData, config *conn.ProviderConfig, wait time.Duration) error {
 	return resource.Retry(wait, func() *resource.RetryError {
 		asg, err := getVpcAutoScalingGroup(config, d.Id())
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+
 		asgServerInstanceList, err := getVpcInAutoScalingGroupServerInstanceList(config, d.Id())
 		if err != nil {
 			return resource.NonRetryableError(err)
@@ -786,6 +795,10 @@ func waitForVpcAutoScalingGroupCapacity(d *schema.ResourceData, config *conn.Pro
 func waitForClassicAutoScalingGroupCapacity(d *schema.ResourceData, config *conn.ProviderConfig, wait time.Duration) error {
 	return resource.Retry(wait, func() *resource.RetryError {
 		asg, err := getClassicAutoScalingGroup(config, d.Id())
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+
 		asgServerInstanceList, err := getClassicInAutoScalingGroupServerInstanceList(config, d.Id())
 		if err != nil {
 			return resource.NonRetryableError(err)

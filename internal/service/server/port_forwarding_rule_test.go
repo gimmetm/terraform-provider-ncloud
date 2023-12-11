@@ -26,9 +26,9 @@ func TestAccResourceNcloudPortForwardingRuleBasic(t *testing.T) {
 	log.Printf("[DEBUG] externalPort: %d", externalPort)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(false),
-		CheckDestroy: testAccCheckPortForwardingRuleDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ClassicProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckPortForwardingRuleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccPortForwardingRuleBasicConfig(externalPort),
@@ -54,6 +54,8 @@ func generateExternalPort(min, max int32) int32 {
 }
 
 // TODO: ignore test: may be empty created data
+//
+//nolint:unused
 func ignore_TestAccResourceNcloudPortForwardingRuleExistingServer(t *testing.T) {
 	var portForwarding server.PortForwardingRule
 
@@ -61,9 +63,9 @@ func ignore_TestAccResourceNcloudPortForwardingRuleExistingServer(t *testing.T) 
 	log.Printf("[DEBUG] externalPort: %d", externalPort)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(false),
-		CheckDestroy: testAccCheckPortForwardingRuleDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ClassicProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckPortForwardingRuleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccPortForwardingRuleExistingServerConfig(externalPort),
@@ -168,6 +170,7 @@ resource "ncloud_port_forwarding_rule" "test" {
 }`, testServerName, testServerName, externalPort)
 }
 
+//nolint:unused
 func testAccPortForwardingRuleExistingServerConfig(externalPort int) string {
 	return fmt.Sprintf(`
 resource "ncloud_port_forwarding_rule" "test" {

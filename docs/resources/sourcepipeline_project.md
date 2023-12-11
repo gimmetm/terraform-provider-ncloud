@@ -1,10 +1,15 @@
+---
+subcategory: "Developer Tools"
+---
+
+
 # Resource: ncloud_sourcepipeline_project
 
 ~> **Note** This resource only supports 'public' site.
 
 ~> **Note:** This resource is a beta release. Some features may change in the future.
 
-Provides a Sourcepipeline project resource.
+Provides a SourcePipeline Project resource.
 
 ## Example Usage
 
@@ -137,7 +142,7 @@ The following arguments are supported:
         *   `scenario_id` - (Optional, Required if `task.type` value is SourceDeploy) Scenario Id of a task. Get avaliable values using the datasource `ncloud_sourcedeploy_project_stage_scenarios`
         *   `target`- (Optional) Target of a task job.
             *   `repository_branch` - (Optional) Target repository branch of SourceBuild task. Default : main branch of target repository
-    *   `linked_tasks` - (Required) Linked tasks which has to be executed before.
+    *   `linked_tasks` - (Required) Linked tasks which has to be executed before. Empty string elements are not allowed.
 *   `triggers` - (Required) `triggers` block describes trigger configuration.
     *   `repository` - (Optional)
         *   `type` - (Optional, Required if `trigger.repository` exists) Type of repository. Accepted values: `sourcecommit`

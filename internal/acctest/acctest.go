@@ -1,12 +1,19 @@
 package acctest
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
@@ -14,16 +21,28 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/provider"
+	"github.com/terraform-providers/terraform-provider-ncloud/internal/provider/fwprovider"
 	. "github.com/terraform-providers/terraform-provider-ncloud/internal/verify"
 )
 
-const SkipNoResultsTest = true
+const (
+	SkipNoResultsTest = true
+	// Provider name for single configuration testing
+	ProviderName = "ncloud"
+)
 
-var testAccProviders map[string]*schema.Provider
-var testAccClassicProviders map[string]*schema.Provider
+// ProtoV6ProviderFactories is a static map containing only the main provider instance
+// for testing
+var (
+	ProtoV6ProviderFactories        map[string]func() (tfprotov6.ProviderServer, error) = protoV6ProviderFactoriesInit(context.Background(), true, ProviderName)
+	ClassicProtoV6ProviderFactories map[string]func() (tfprotov6.ProviderServer, error) = protoV6ProviderFactoriesInit(context.Background(), false, ProviderName)
+)
 
 var testAccProvider *schema.Provider
 var testAccClassicProvider *schema.Provider
+
+// testAccProviderConfigure ensures Provider is only configured once
+var testAccProviderConfigure sync.Once
 
 var credsEnvVars = []string{
 	"NCLOUD_ACCESS_KEY",
@@ -35,14 +54,13 @@ var regionEnvVar = "NCLOUD_REGION"
 func init() {
 	testAccProvider = getTestAccProvider(true)
 	testAccClassicProvider = getTestAccProvider(false)
+}
 
-	testAccProviders = map[string]*schema.Provider{
-		"ncloud": testAccProvider,
+func GetTestProviderFactories(isVpc bool) map[string]func() (tfprotov6.ProviderServer, error) {
+	if isVpc {
+		return ProtoV6ProviderFactories
 	}
-
-	testAccClassicProviders = map[string]*schema.Provider{
-		"ncloud": testAccClassicProvider,
-	}
+	return ClassicProtoV6ProviderFactories
 }
 
 func GetTestProvider(isVpc bool) *schema.Provider {
@@ -53,31 +71,34 @@ func GetTestProvider(isVpc bool) *schema.Provider {
 	return testAccClassicProvider
 }
 
-func GetTestAccProviders(isVpc bool) map[string]*schema.Provider {
-	if isVpc {
-		return testAccProviders
-	}
-
-	return testAccClassicProviders
-}
-
 func getTestAccProvider(isVpc bool) *schema.Provider {
-	p := provider.Provider()
-	p.ConfigureFunc = func(d *schema.ResourceData) (interface{}, error) {
+	p := provider.New(context.Background())
+	p.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		d.Set("region", testAccGetRegion())
 		d.Set("support_vpc", isVpc)
-		return provider.ProviderConfigure(d)
+		return provider.ProviderConfigure(ctx, d)
 	}
 	return p
 }
 
 func TestAccPreCheck(t *testing.T) {
-	if v := multiEnvSearch(credsEnvVars); v == "" {
-		t.Fatalf("One of %s must be set for acceptance tests", strings.Join(credsEnvVars, ", "))
-	}
+	testAccProviderConfigure.Do(func() {
+		if v := multiEnvSearch(credsEnvVars); v == "" {
+			t.Fatalf("One of %s must be set for acceptance tests", strings.Join(credsEnvVars, ", "))
+		}
 
-	region := testAccGetRegion()
-	log.Printf("[INFO] Test: Using %s as test region", region)
+		region := testAccGetRegion()
+		log.Printf("[INFO] Test: Using %s as test region", region)
+
+		diags := testAccProvider.Configure(context.Background(), terraform.NewResourceConfigRaw(nil))
+		if diags.HasError() {
+			t.Fatalf("configuring provider: %v", diags)
+		}
+		diags2 := testAccClassicProvider.Configure(context.Background(), terraform.NewResourceConfigRaw(nil))
+		if diags2.HasError() {
+			t.Fatalf("configuring provider: %v", diags2)
+		}
+	})
 }
 
 func testAccGetRegion() string {
@@ -158,4 +179,54 @@ func GetTestClusterName() string {
 	rInt := acctest.RandIntRange(1, 9999)
 	testClusterName := fmt.Sprintf("tf-%d-cluster", rInt)
 	return testClusterName
+}
+
+func protoV6ProviderFactoriesInit(ctx context.Context, isVpc bool, providerNames ...string) map[string]func() (tfprotov6.ProviderServer, error) {
+	factories := make(map[string]func() (tfprotov6.ProviderServer, error), len(providerNames))
+
+	for _, name := range providerNames {
+		factories[name] = func() (tfprotov6.ProviderServer, error) {
+			providerServerFactory, _, err := protoV6TestProviderServerFactory(ctx, isVpc)
+
+			if err != nil {
+				return nil, err
+			}
+
+			return providerServerFactory(), nil
+		}
+	}
+
+	return factories
+}
+
+func protoV6TestProviderServerFactory(ctx context.Context, isVpc bool) (func() tfprotov6.ProviderServer, *schema.Provider, error) {
+	primary := provider.New(ctx)
+	primary.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		d.Set("region", testAccGetRegion())
+		d.Set("support_vpc", isVpc)
+		return provider.ProviderConfigure(ctx, d)
+	}
+
+	upgradedSdkProvider, err := tf5to6server.UpgradeServer(
+		ctx,
+		primary.GRPCProvider,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	servers := []func() tfprotov6.ProviderServer{
+		func() tfprotov6.ProviderServer {
+			return upgradedSdkProvider
+		},
+		providerserver.NewProtocol6(fwprovider.New(primary)),
+	}
+
+	muxServer, err := tf6muxserver.NewMuxServer(ctx, servers...)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return muxServer.ProviderServer, primary, nil
 }

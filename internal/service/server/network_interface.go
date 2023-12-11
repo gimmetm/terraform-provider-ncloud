@@ -46,19 +46,22 @@ func ResourceNcloudNetworkInterface() *schema.Resource {
 				Optional:         true,
 				Computed:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: ToDiagFunc(ValidateInstanceName),
+				ValidateDiagFunc: validation.ToDiagFunc(ValidateInstanceName),
 			},
 			"private_ip": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Computed:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.IsIPv4Address),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IsIPv4Address),
 			},
 			"access_control_groups": {
 				Type:     schema.TypeSet,
 				Required: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				},
 			},
 			"server_instance_no": {
 				Type:     schema.TypeString,
@@ -70,7 +73,7 @@ func ResourceNcloudNetworkInterface() *schema.Resource {
 				Optional:         true,
 				Computed:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.StringLenBetween(0, 1000)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 1000)),
 			},
 			"network_interface_no": {
 				Type:     schema.TypeString,
@@ -376,9 +379,7 @@ func attachNetworkInterface(d *schema.ResourceData, config *conn.ProviderConfig)
 		return err
 	}
 
-	if err := waitForPublicIpDisassociation(config, d.Id()); err != nil {
-		return err
-	}
+	_ = waitForPublicIpDisassociate(d, config)
 
 	return nil
 }
@@ -402,6 +403,30 @@ func attachVpcNetworkInterface(d *schema.ResourceData, config *conn.ProviderConf
 
 	if err := waitForNetworkInterfaceAttachment(config, d.Id()); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func waitForPublicIpDisassociate(d *schema.ResourceData, config *conn.ProviderConfig) error {
+	reqParams := &vserver.GetServerInstanceDetailRequest{
+		RegionCode:       &config.RegionCode,
+		ServerInstanceNo: ncloud.String(d.Get("server_instance_no").(string)),
+	}
+
+	resp, err := config.Client.Vserver.V2Api.GetServerInstanceDetail(reqParams)
+	if err != nil {
+		return err
+	}
+
+	if err := ValidateOneResult(len(resp.ServerInstanceList)); err != nil {
+		return err
+	}
+
+	if publicIpNo := *resp.ServerInstanceList[0].PublicIpInstanceNo; publicIpNo != "" {
+		if err := waitForPublicIpDisassociation(config, publicIpNo); err != nil {
+			return err
+		}
 	}
 
 	return nil

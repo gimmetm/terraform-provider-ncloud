@@ -1,10 +1,15 @@
+---
+subcategory: "Developer Tools"
+---
+
+
 # Resource : ncloud_sourcedeploy_project_stage_scenario
 
 ~> **Note** This resource only supports 'public' site.
 
 -> **Note:** This resource is a beta release. Some features may change in the future.
 
-This resource is useful for look up the list of Sourcedeploy scenario in the region.
+This resource is useful for look up the list of SourceDeploy Scenario in the region.
 
 ## Example Usage
 
@@ -137,7 +142,7 @@ The following arguments are supported:
         * `type` - (Required) Repository type. Accepted values: `SourceCommit`.
         * `repository_name` - (Required) The name of repository.
         * `branch` - (Required) The name of repository branch.
-        * `path` - (Required) File path.
+        * `path` - (Required) File path. Empty string elements are not allowed.
     * `canary_config` - (Optional, Required If stage type is set to `KubernetesService` &  strategy is set to `canary` ) config when deploying Kubernetesservice canary.
         * `analysis_type` - (Required) Canary analysis method. Accepted values: `manual`, `auto`.
         * `canary_count` - (Required) Number of baseline and canary pod.
@@ -178,4 +183,6 @@ The following arguments are supported:
 
 SourceDeploy scenario can be imported using the project_id, stage_id, scenario_id separated by a colon (:), e.g.,
 
+```
 $ terraform import ncloud_sourcedeploy_project_stage_scenario.my_scenario project_id:stage_id:scenario_id
+```

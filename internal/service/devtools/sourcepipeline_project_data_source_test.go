@@ -14,8 +14,8 @@ func TestAccDataSourceNcloudSourcePipelineProject_classic_basic(t *testing.T) {
 	resourceName := "ncloud_sourcepipeline_project.test-project"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(false),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ClassicProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudSourcePipelineProjectConfig("test-project", "description test"),
@@ -35,8 +35,8 @@ func TestAccDataSourceNcloudSourcePipelineProject_vpc_basic(t *testing.T) {
 	resourceName := "ncloud_sourcepipeline_project.test-project"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudSourcePipelineProjectConfig("test-project", "description test"),

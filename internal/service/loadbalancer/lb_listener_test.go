@@ -19,8 +19,8 @@ func TestAccResourceNcloudLbListener_vpc_basic(t *testing.T) {
 	lbName := fmt.Sprintf("terraform-testacc-lb-%s", acctest.RandString(5))
 	resourceName := "ncloud_lb_listener.test"
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		CheckDestroy: func(state *terraform.State) error {
 			return testAccCheckLbListenerDestroy(state, GetTestProvider(true))
 		},
@@ -87,12 +87,12 @@ func testAccCheckLbListenerDestroy(s *terraform.State, provider *schema.Provider
 }
 
 func testAccResourceNcloudLbListenerConfig(lbName string) string {
-	return testAccResourceNcloudLbConfig(lbName) + fmt.Sprintf(`
+	return testAccResourceNcloudLbConfig(lbName) + `
 resource "ncloud_lb_listener" "test" {
     load_balancer_no = ncloud_lb.test.load_balancer_no
     protocol = "HTTP"
     port = 8080
     target_group_no = ncloud_lb_target_group.test.target_group_no
 }
-`)
+`
 }

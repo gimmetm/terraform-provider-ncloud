@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -22,8 +23,8 @@ func TestAccResourceNcloudSourcePipelineProject_classic_basic(t *testing.T) {
 	resourceName := "ncloud_sourcepipeline_project.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(false),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ClassicProtoV6ProviderFactories,
 		CheckDestroy: func(state *terraform.State) error {
 			return testAccCheckSourcePipelineProjectDestroy(state, GetTestProvider(false))
 		},
@@ -50,8 +51,8 @@ func TestAccResourceNcloudSourcePipelineProject_classic_updateTaskName(t *testin
 	resourceName := "ncloud_sourcepipeline_project.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(false),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ClassicProtoV6ProviderFactories,
 		CheckDestroy: func(state *terraform.State) error {
 			return testAccCheckSourcePipelineProjectDestroy(state, GetTestProvider(false))
 		},
@@ -87,8 +88,8 @@ func TestAccResourceNcloudSourcePipelineProject_classic_updateDescription(t *tes
 	resourceName := "ncloud_sourcepipeline_project.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(false),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ClassicProtoV6ProviderFactories,
 		CheckDestroy: func(state *terraform.State) error {
 			return testAccCheckSourcePipelineProjectDestroy(state, GetTestProvider(false))
 		},
@@ -124,8 +125,8 @@ func TestAccResourceNcloudSourcePipelineProject_vpc_basic(t *testing.T) {
 	resourceName := "ncloud_sourcepipeline_project.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		CheckDestroy: func(state *terraform.State) error {
 			return testAccCheckSourcePipelineProjectDestroy(state, GetTestProvider(true))
 		},
@@ -152,8 +153,8 @@ func TestAccResourceNcloudSourcePipelineProject_vpc_updateTaskName(t *testing.T)
 	resourceName := "ncloud_sourcepipeline_project.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		CheckDestroy: func(state *terraform.State) error {
 			return testAccCheckSourcePipelineProjectDestroy(state, GetTestProvider(true))
 		},
@@ -189,8 +190,8 @@ func TestAccResourceNcloudSourcePipelineProject_vpc_updateDescription(t *testing
 	resourceName := "ncloud_sourcepipeline_project.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		CheckDestroy: func(state *terraform.State) error {
 			return testAccCheckSourcePipelineProjectDestroy(state, GetTestProvider(true))
 		},
@@ -803,6 +804,11 @@ func testAccCheckSourcePipelineProjectDestroy(s *terraform.State, provider *sche
 			return errors.New("SourcePipeline project still exists")
 		}
 	}
+
+	// FIXME: When testing, time gap is required between each test to create
+	// resource without any issues. It should guarantee to deletion and creation
+	// of the resource without problem from the PipelineProject API
+	time.Sleep(1 * time.Minute)
 
 	return nil
 }

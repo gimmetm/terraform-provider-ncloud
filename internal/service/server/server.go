@@ -59,10 +59,9 @@ func ResourceNcloudServer() *schema.Resource {
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
-				ValidateDiagFunc: ToDiagFunc(validation.All(
+				ValidateDiagFunc: validation.ToDiagFunc(validation.All(
 					validation.StringLenBetween(3, 30),
-					validation.StringMatch(regexp.MustCompile(`^[A-Za-z0-9-*]+$`), "Composed of alphabets, numbers, hyphen (-) and wild card (*)."),
-					validation.StringMatch(regexp.MustCompile(`.*[^\\-]$`), "Hyphen (-) cannot be used for the last character and if wild card (*) is used, other characters cannot be input."),
+					validation.StringMatch(regexp.MustCompile(`^[a-z]+[a-z0-9-]+[a-z0-9]$`), "Allows only lowercase letters(a-z), numbers, hyphen (-). Must start with an alphabetic character, must end with an English letter or number"),
 				)),
 			},
 			"description": {
@@ -88,7 +87,7 @@ func ResourceNcloudServer() *schema.Resource {
 				Optional:         true,
 				Computed:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.StringInSlice([]string{"PUBLC", "GLBL"}, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"PUBLC", "GLBL"}, false)),
 				Deprecated:       "This parameter is no longer used.",
 			},
 			"fee_system_type_code": {
@@ -288,7 +287,7 @@ func resourceNcloudServerRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if config.SupportVPC {
-		buildNetworkInterfaceList(config, r)
+		_ = buildNetworkInterfaceList(config, r)
 	}
 
 	instance := ConvertToMap(r)
@@ -326,6 +325,10 @@ func resourceNcloudServerDelete(d *schema.ResourceData, meta interface{}) error 
 			if err := waitForDisconnectBlockStorage(config, d, blockStorage); err != nil {
 				return err
 			}
+		}
+
+		if err := detachThenWaitServerInstance(config, d.Id()); err != nil {
+			return err
 		}
 	}
 
@@ -964,6 +967,31 @@ func stopThenWaitServerInstance(config *conn.ProviderConfig, id string) error {
 	return nil
 }
 
+func detachThenWaitServerInstance(config *conn.ProviderConfig, id string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"SETUP"},
+		Target:  []string{"NULL"},
+		Refresh: func() (interface{}, string, error) {
+			instance, err := GetServerInstance(config, id)
+			if err != nil {
+				return 0, "", err
+			}
+
+			return instance, ncloud.StringValue(instance.ServerInstanceOperation), nil
+		},
+		Timeout:    conn.DefaultStopTimeout,
+		Delay:      5 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+
+	_, err := stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf("error waiting for ServerInstance operation to be \"NULL\": %s", err)
+	}
+
+	return nil
+}
+
 func stopClassicServerInstance(config *conn.ProviderConfig, id string) error {
 	reqParams := &server.StopServerInstancesRequest{
 		ServerInstanceNoList: []*string{ncloud.String(id)},
@@ -987,7 +1015,7 @@ func stopVpcServerInstance(config *conn.ProviderConfig, id string) error {
 	LogCommonRequest("stopVpcServerInstance", reqParams)
 	resp, err := config.Client.Vserver.V2Api.StopServerInstances(reqParams)
 	if err != nil {
-		LogErrorResponse("stopClassicServerInstance", err, reqParams)
+		LogErrorResponse("stopVpcServerInstance", err, reqParams)
 		return err
 	}
 	LogResponse("stopVpcServerInstance", resp)
@@ -1101,6 +1129,8 @@ func getVpcAdditionalBlockStorageList(config *conn.ProviderConfig, id string) ([
 		return nil, err
 	}
 
+	LogResponse("getVpcAdditionalBlockStorageList", resp)
+
 	if len(resp.BlockStorageInstanceList) < 1 {
 		return nil, nil
 	}
@@ -1123,6 +1153,8 @@ func getClassicAdditionalBlockStorageList(config *conn.ProviderConfig, id string
 	if err != nil {
 		return nil, err
 	}
+
+	LogResponse("getClassicAdditionalBlockStorageList", resp)
 
 	if len(resp.BlockStorageInstanceList) < 1 {
 		return nil, nil

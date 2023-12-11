@@ -11,9 +11,9 @@ import (
 
 func TestAccDataSourceNcloudServerProducts_classic_basic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:   func() { TestAccPreCheck(t) },
-		IsUnitTest: false,
-		Providers:  GetTestAccProviders(false),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		IsUnitTest:               false,
+		ProtoV6ProviderFactories: ClassicProtoV6ProviderFactories,
 
 		Steps: []resource.TestStep{
 			{
@@ -28,9 +28,9 @@ func TestAccDataSourceNcloudServerProducts_classic_basic(t *testing.T) {
 
 func TestAccDataSourceNcloudServerProducts_vpc_basic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:   func() { TestAccPreCheck(t) },
-		IsUnitTest: false,
-		Providers:  GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		IsUnitTest:               false,
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 
 		Steps: []resource.TestStep{
 			{

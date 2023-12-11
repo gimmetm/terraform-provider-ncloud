@@ -20,8 +20,8 @@ func TestAccResourceNcloudLbTargetGroup_basic(t *testing.T) {
 	name := fmt.Sprintf("terraform-testacc-tg-%s", acctest.RandString(5))
 	resourceName := "ncloud_lb_target_group.test"
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		CheckDestroy: func(state *terraform.State) error {
 			return testAccCheckLbTargetGroupDestroy(state, GetTestProvider(true))
 		},
@@ -56,8 +56,8 @@ func TestAccResourceNcloudLbTargetGroup_emptyTargetGroupName(t *testing.T) {
 	var tg loadbalancer.TargetGroup
 	resourceName := "ncloud_lb_target_group.test"
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		CheckDestroy: func(state *terraform.State) error {
 			return testAccCheckLbTargetGroupDestroy(state, GetTestProvider(true))
 		},
@@ -175,7 +175,7 @@ resource "ncloud_lb_target_group" "test" {
 }
 
 func testAccResourceNcloudLbTargetGroupEmptyTargetGroupNameConfig() string {
-	return fmt.Sprintf(`
+	return `
 resource "ncloud_vpc" "test" {
 	ipv4_cidr_block    = "10.0.0.0/16"
 }
@@ -209,5 +209,5 @@ resource "ncloud_lb_target_group" "test" {
   algorithm_type = "RR"
   use_sticky_session = true
 }
-`)
+`
 }

@@ -1,6 +1,8 @@
 package autoscaling
 
 import (
+	"regexp"
+
 	"github.com/NaverCloudPlatform/ncloud-sdk-go-v2/ncloud"
 	"github.com/NaverCloudPlatform/ncloud-sdk-go-v2/services/autoscaling"
 	"github.com/NaverCloudPlatform/ncloud-sdk-go-v2/services/vautoscaling"
@@ -9,7 +11,6 @@ import (
 
 	. "github.com/terraform-providers/terraform-provider-ncloud/internal/common"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/conn"
-	. "github.com/terraform-providers/terraform-provider-ncloud/internal/verify"
 )
 
 func ResourceNcloudAutoScalingPolicy() *schema.Resource {
@@ -26,24 +27,30 @@ func ResourceNcloudAutoScalingPolicy() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.All(
+					validation.StringLenBetween(1, 255),
+					validation.StringMatch(regexp.MustCompile(`^[a-z]+[a-z0-9-]+[a-z0-9]$`), "Allows only lowercase letters(a-z), numbers, hyphen (-). Must start with an alphabetic character, must end with an English letter or number"))),
 			},
 			"adjustment_type_code": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.StringInSlice([]string{"CHANG", "EXACT", "PRCNT"}, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"CHANG", "EXACT", "PRCNT"}, false)),
 			},
 			"scaling_adjustment": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:             schema.TypeInt,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(-2147483648, 2147483647)),
 			},
 			"cooldown": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Computed: true,
+				Type:             schema.TypeInt,
+				Optional:         true,
+				Default:          300,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 2147483647)),
 			},
 			"min_adjustment_step": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:             schema.TypeInt,
+				Optional:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 2147483647)),
 			},
 			"auto_scaling_group_no": {
 				Type:     schema.TypeString,
@@ -85,7 +92,7 @@ func createVpcAutoScalingPolicy(d *schema.ResourceData, config *conn.ProviderCon
 		PolicyName:         ncloud.String(d.Get("name").(string)),
 		// Optional
 		MinAdjustmentStep: Int32PtrOrNil(d.GetOk("min_adjustment_step")),
-		CoolDown:          Int32PtrOrNil(d.GetOk("cooldown")),
+		CoolDown:          ncloud.Int32(int32(d.Get("cooldown").(int))),
 	}
 	resp, err := config.Client.Vautoscaling.V2Api.PutScalingPolicy(reqParams)
 	if err != nil {
@@ -111,7 +118,7 @@ func createClassicAutoScalingPolicy(d *schema.ResourceData, config *conn.Provide
 		PolicyName:           name,
 		// Optional
 		MinAdjustmentStep: Int32PtrOrNil(d.GetOk("min_adjustment_step")),
-		Cooldown:          Int32PtrOrNil(d.GetOk("cooldown")),
+		Cooldown:          ncloud.Int32(int32(d.Get("cooldown").(int))),
 	}
 
 	if _, err := config.Client.Autoscaling.V2Api.PutScalingPolicy(reqParams); err != nil {
@@ -157,6 +164,10 @@ func getVpcAutoScalingPolicy(config *conn.ProviderConfig, id string, autoScaling
 		return nil, err
 	}
 
+	if len(resp.ScalingPolicyList) == 0 {
+		return nil, nil
+	}
+
 	p := resp.ScalingPolicyList[0]
 	return &AutoScalingPolicy{
 		AutoScalingPolicyNo:   p.PolicyNo,
@@ -174,6 +185,9 @@ func getClassicAutoScalingPolicy(config *conn.ProviderConfig, id string, autoSca
 	asg, err := getClassicAutoScalingGroup(config, autoScalingGroupNo)
 	if err != nil {
 		return nil, err
+	}
+	if asg == nil {
+		return nil, nil
 	}
 
 	reqParams := &autoscaling.GetAutoScalingPolicyListRequest{

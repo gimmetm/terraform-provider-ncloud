@@ -119,7 +119,7 @@ func DataSourceNcloudNKSCluster() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"groups_cliam": {
+						"groups_claim": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},

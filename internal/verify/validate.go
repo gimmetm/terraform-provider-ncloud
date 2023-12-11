@@ -6,10 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/hashicorp/go-cty/cty"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func ValidateInstanceName(v interface{}, k string) (ws []string, errors []error) {
@@ -113,27 +109,12 @@ func ValidateParseDuration(v interface{}, k string) (ws []string, errors []error
 	return
 }
 
-func ToDiagFunc(validator schema.SchemaValidateFunc) schema.SchemaValidateDiagFunc {
-	return func(v interface{}, path cty.Path) diag.Diagnostics {
-		var diags diag.Diagnostics
+func ValidateDateISO8601(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
 
-		attr := path[len(path)-1].(cty.GetAttrStep)
-		warnings, errors := validator(v, attr.Name)
-
-		for _, w := range warnings {
-			diags = append(diags, diag.Diagnostic{
-				Severity:      diag.Warning,
-				Summary:       w,
-				AttributePath: path,
-			})
-		}
-		for _, err := range errors {
-			diags = append(diags, diag.Diagnostic{
-				Severity:      diag.Error,
-				Summary:       err.Error(),
-				AttributePath: path,
-			})
-		}
-		return diags
+	if _, err := time.Parse("2006-01-02T15:04:05Z0700", value); err != nil {
+		errors = append(errors, fmt.Errorf(
+			"%q cannot be parsed as a ISO8601 date: %s", k, err))
 	}
+	return
 }

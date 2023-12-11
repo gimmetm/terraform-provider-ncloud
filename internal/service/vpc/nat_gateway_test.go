@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/NaverCloudPlatform/ncloud-sdk-go-v2/services/vpc"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	sdkacctest "github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
@@ -18,14 +18,14 @@ import (
 
 func TestAccResourceNcloudNatGateway_basic(t *testing.T) {
 	var natGateway vpc.NatGatewayInstance
-	name := fmt.Sprintf("test-nat-gateway-%s", acctest.RandString(5))
+	name := fmt.Sprintf("test-nat-gateway-%s", sdkacctest.RandString(5))
 	resourceName := "ncloud_nat_gateway.nat_gateway"
 	resourcePrivate := "ncloud_nat_gateway.nat_gateway_private"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNatGatewayDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNatGatewayDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudNatGatewayConfig(name),
@@ -56,13 +56,13 @@ func TestAccResourceNcloudNatGateway_basic(t *testing.T) {
 
 func TestAccResourceNcloudNatGateway_disappears(t *testing.T) {
 	var natGateway vpc.NatGatewayInstance
-	name := fmt.Sprintf("test-nat-gateway-%s", acctest.RandString(5))
+	name := fmt.Sprintf("test-nat-gateway-%s", sdkacctest.RandString(5))
 	resourceName := "ncloud_nat_gateway.nat_gateway"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNatGatewayDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNatGatewayDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudNatGatewayConfig(name),
@@ -78,13 +78,13 @@ func TestAccResourceNcloudNatGateway_disappears(t *testing.T) {
 
 func TestAccResourceNcloudNatGateway_onlyRequiredParam(t *testing.T) {
 	var natGateway vpc.NatGatewayInstance
-	name := fmt.Sprintf("test-nat-gateway-%s", acctest.RandString(5))
+	name := fmt.Sprintf("test-nat-gateway-%s", sdkacctest.RandString(5))
 	resourceName := "ncloud_nat_gateway.nat_gateway"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNatGatewayDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNatGatewayDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudNatGatewayConfigOnlyRequiredParam(name),
@@ -93,6 +93,7 @@ func TestAccResourceNcloudNatGateway_onlyRequiredParam(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceName, "vpc_no", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(resourceName, "nat_gateway_no", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(resourceName, "name", regexp.MustCompile(`^[a-z0-9]+$`)),
+					resource.TestMatchResourceAttr(resourceName, "subnet_no", regexp.MustCompile(`^\d+$`)),
 				),
 			},
 			{
@@ -106,13 +107,13 @@ func TestAccResourceNcloudNatGateway_onlyRequiredParam(t *testing.T) {
 
 func TestAccResourceNcloudNatGateway_updateName(t *testing.T) {
 	var natGateway vpc.NatGatewayInstance
-	name := fmt.Sprintf("test-nat-gateway-%s", acctest.RandString(5))
+	name := fmt.Sprintf("test-nat-gateway-%s", sdkacctest.RandString(5))
 	resourceName := "ncloud_nat_gateway.nat_gateway"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNatGatewayDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNatGatewayDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudNatGatewayConfig(name),
@@ -127,13 +128,13 @@ func TestAccResourceNcloudNatGateway_updateName(t *testing.T) {
 
 func TestAccResourceNcloudNatGateway_description(t *testing.T) {
 	var natGateway vpc.NatGatewayInstance
-	name := fmt.Sprintf("test-nat-gateway-%s", acctest.RandString(5))
+	name := fmt.Sprintf("test-nat-gateway-%s", sdkacctest.RandString(5))
 	resourceName := "ncloud_nat_gateway.nat_gateway"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNatGatewayDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNatGatewayDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudNatGatewayConfigDescription(name, "foo"),
@@ -204,22 +205,6 @@ resource "ncloud_nat_gateway" "nat_gateway_private" {
 `, name, description)
 }
 
-func testAccResourceNcloudNatGatewayConfigUpdate(name, updateName string) string {
-	return fmt.Sprintf(`
-resource "ncloud_vpc" "vpc" {
-	name            = "%s"
-	ipv4_cidr_block = "10.3.0.0/16"
-}
-
-resource "ncloud_nat_gateway" "nat_gateway" {
-  vpc_no      = ncloud_vpc.vpc.vpc_no
-  zone        = "KR-1"
-  name        = "%s"
-  description = "description"
-}
-`, name, updateName)
-}
-
 func testAccResourceNcloudNatGatewayConfigOnlyRequiredParam(name string) string {
 	return fmt.Sprintf(`
 resource "ncloud_vpc" "vpc" {
@@ -227,8 +212,18 @@ resource "ncloud_vpc" "vpc" {
 	ipv4_cidr_block = "10.3.0.0/16"
 }
 
+resource "ncloud_subnet" "subnet_public" {
+  vpc_no         = ncloud_vpc.vpc.id
+  subnet         = cidrsubnet(ncloud_vpc.vpc.ipv4_cidr_block, 8, 1)
+  zone           = "KR-1"
+  network_acl_no = ncloud_vpc.vpc.default_network_acl_no
+  subnet_type    = "PUBLIC"
+  usage_type     = "NATGW"
+}
+	
 resource "ncloud_nat_gateway" "nat_gateway" {
   vpc_no      = ncloud_vpc.vpc.vpc_no
+  subnet_no   = ncloud_subnet.subnet_public.id
   zone        = "KR-1"
 }
 `, name)

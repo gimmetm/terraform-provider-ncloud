@@ -1,9 +1,11 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/conn"
@@ -12,10 +14,8 @@ import (
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/cdss"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/classicloadbalancer"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/devtools"
-	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/launchconfiguration"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/loadbalancer"
-	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/loginkey"
-	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/memberserverimage"
+	cloudmssql "github.com/terraform-providers/terraform-provider-ncloud/internal/service/mssql"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/nasvolume"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/nks"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/service/server"
@@ -24,7 +24,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/zone"
 )
 
-func Provider() *schema.Provider {
+func New(ctx context.Context) *schema.Provider {
 	dataSourceMap := map[string]*schema.Resource{
 		"ncloud_access_control_group":                    server.DataSourceNcloudAccessControlGroup(),
 		"ncloud_access_control_groups":                   server.DataSourceNcloudAccessControlGroups(),
@@ -33,6 +33,7 @@ func Provider() *schema.Provider {
 		"ncloud_auto_scaling_group":                      autoscaling.DataSourceNcloudAutoScalingGroup(),
 		"ncloud_auto_scaling_policy":                     autoscaling.DataSourceNcloudAutoScalingPolicy(),
 		"ncloud_auto_scaling_schedule":                   autoscaling.DataSourceNcloudAutoScalingSchedule(),
+		"ncloud_auto_scaling_adjustment_types":           autoscaling.DataSourceNcloudAutoScalingAdjustmentTypes(),
 		"ncloud_block_storage":                           server.DataSourceNcloudBlockStorage(),
 		"ncloud_block_storage_snapshot":                  server.DataSourceNcloudBlockStorageSnapshot(),
 		"ncloud_cdss_cluster":                            cdss.DataSourceNcloudCDSSCluster(),
@@ -43,16 +44,14 @@ func Provider() *schema.Provider {
 		"ncloud_cdss_node_products":                      cdss.DataSourceNcloudCDSSNodeProducts(),
 		"ncloud_cdss_os_image":                           cdss.DataSourceNcloudCDSSOsImage(),
 		"ncloud_cdss_os_images":                          cdss.DataSourceNcloudCDSSOsImages(),
-		"ncloud_init_script":                             server.DataSourceNcloudInitScript(),
-		"ncloud_launch_configuration":                    launchconfiguration.DataSourceNcloudLaunchConfiguration(),
+		"ncloud_launch_configuration":                    autoscaling.DataSourceNcloudLaunchConfiguration(),
 		"ncloud_lb":                                      loadbalancer.DataSourceNcloudLb(),
 		"ncloud_lb_listener":                             loadbalancer.DataSourceNcloudLbListener(),
 		"ncloud_lb_target_group":                         loadbalancer.DataSourceNcloudLbTargetGroup(),
-		"ncloud_member_server_image":                     memberserverimage.DataSourceNcloudMemberServerImage(),
-		"ncloud_member_server_images":                    memberserverimage.DataSourceNcloudMemberServerImages(),
+		"ncloud_member_server_image":                     server.DataSourceNcloudMemberServerImage(),
+		"ncloud_member_server_images":                    server.DataSourceNcloudMemberServerImages(),
 		"ncloud_nas_volume":                              nasvolume.DataSourceNcloudNasVolume(),
 		"ncloud_nas_volumes":                             nasvolume.DataSourceNcloudNasVolumes(),
-		"ncloud_nat_gateway":                             vpc.DataSourceNcloudNatGateway(),
 		"ncloud_network_acls":                            vpc.DataSourceNcloudNetworkAcls(),
 		"ncloud_network_acl_deny_allow_groups":           vpc.DataSourceNcloudNetworkACLDenyAllowGroups(),
 		"ncloud_network_interface":                       server.DataSourceNcloudNetworkInterface(),
@@ -101,12 +100,8 @@ func Provider() *schema.Provider {
 		"ncloud_sourcepipeline_project":                  devtools.DataSourceNcloudSourcePipelineProject(),
 		"ncloud_sourcepipeline_projects":                 devtools.DataSourceNcloudSourcePipelineProjects(),
 		"ncloud_sourcepipeline_trigger_timezone":         devtools.DataSourceNcloudSourcePipelineTimeZone(),
-		"ncloud_subnet":                                  vpc.DataSourceNcloudSubnet(),
-		"ncloud_subnets":                                 vpc.DataSourceNcloudSubnets(),
-		"ncloud_vpc":                                     vpc.DataSourceNcloudVpc(),
-		"ncloud_vpcs":                                    vpc.DataSourceNcloudVpcs(),
-		"ncloud_vpc_peering":                             vpc.DataSourceNcloudVpcPeering(),
 		"ncloud_zones":                                   zone.DataSourceNcloudZones(),
+		"ncloud_mssql":                                   cloudmssql.DataSourceNcloudMssql(),
 	}
 
 	resourceMap := map[string]*schema.Resource{
@@ -119,17 +114,14 @@ func Provider() *schema.Provider {
 		"ncloud_block_storage":                       server.ResourceNcloudBlockStorage(),
 		"ncloud_cdss_cluster":                        cdss.ResourceNcloudCDSSCluster(),
 		"ncloud_cdss_config_group":                   cdss.ResourceNcloudCDSSConfigGroup(),
-		"ncloud_init_script":                         server.ResourceNcloudInitScript(),
-		"ncloud_launch_configuration":                launchconfiguration.ResourceNcloudLaunchConfiguration(),
+		"ncloud_launch_configuration":                autoscaling.ResourceNcloudLaunchConfiguration(),
 		"ncloud_lb_listener":                         loadbalancer.ResourceNcloudLbListener(),
 		"ncloud_lb_target_group_attachment":          loadbalancer.ResourceNcloudLbTargetGroupAttachment(),
 		"ncloud_lb_target_group":                     loadbalancer.ResourceNcloudLbTargetGroup(),
 		"ncloud_lb":                                  loadbalancer.ResourceNcloudLb(),
 		"ncloud_load_balancer_ssl_certificate":       classicloadbalancer.ResourceNcloudLoadBalancerSSLCertificate(),
 		"ncloud_load_balancer":                       classicloadbalancer.ResourceNcloudLoadBalancer(),
-		"ncloud_login_key":                           loginkey.ResourceNcloudLoginKey(),
 		"ncloud_nas_volume":                          nasvolume.ResourceNcloudNasVolume(),
-		"ncloud_nat_gateway":                         vpc.ResourceNcloudNatGateway(),
 		"ncloud_network_acl":                         vpc.ResourceNcloudNetworkACL(),
 		"ncloud_network_acl_deny_allow_group":        vpc.ResourceNcloudNetworkACLDenyAllowGroup(),
 		"ncloud_network_acl_rule":                    vpc.ResourceNcloudNetworkACLRule(),
@@ -150,16 +142,14 @@ func Provider() *schema.Provider {
 		"ncloud_sourcedeploy_project_stage":          devtools.ResourceNcloudSourceDeployStage(),
 		"ncloud_sourcedeploy_project":                devtools.ResourceNcloudSourceDeployProject(),
 		"ncloud_sourcepipeline_project":              devtools.ResourceNcloudSourcePipeline(),
-		"ncloud_subnet":                              vpc.ResourceNcloudSubnet(),
-		"ncloud_vpc":                                 vpc.ResourceNcloudVpc(),
-		"ncloud_vpc_peering":                         vpc.ResourceNcloudVpcPeering(),
+		"ncloud_mssql":                               cloudmssql.ResourceNcloudMssql(),
 	}
 
 	return &schema.Provider{
-		Schema:         SchemaMap(),
-		DataSourcesMap: dataSourceMap,
-		ResourcesMap:   resourceMap,
-		ConfigureFunc:  ProviderConfigure,
+		Schema:               SchemaMap(),
+		DataSourcesMap:       dataSourceMap,
+		ResourcesMap:         resourceMap,
+		ConfigureContextFunc: ProviderConfigure,
 	}
 }
 
@@ -167,44 +157,43 @@ func SchemaMap() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"access_key": {
 			Type:        schema.TypeString,
-			Required:    true,
-			DefaultFunc: schema.EnvDefaultFunc("NCLOUD_ACCESS_KEY", nil),
+			Optional:    true,
 			Description: "Access key of ncloud",
-		},
-		"secret_key": {
-			Type:        schema.TypeString,
-			Required:    true,
-			DefaultFunc: schema.EnvDefaultFunc("NCLOUD_SECRET_KEY", nil),
-			Description: "Secret key of ncloud",
 		},
 		"region": {
 			Type:        schema.TypeString,
-			Required:    true,
-			DefaultFunc: schema.EnvDefaultFunc("NCLOUD_REGION", nil),
+			Optional:    true,
 			Description: "Region of ncloud",
+		},
+		"secret_key": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Secret key of ncloud",
 		},
 		"site": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			DefaultFunc: schema.EnvDefaultFunc("NCLOUD_SITE", nil),
 			Description: "Site of ncloud (public / gov / fin)",
 		},
 		"support_vpc": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			DefaultFunc: schema.EnvDefaultFunc("NCLOUD_SUPPORT_VPC", nil),
 			Description: "Support VPC platform",
 		},
 	}
 }
 
-func ProviderConfigure(d *schema.ResourceData) (interface{}, error) {
+func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	providerConfig := conn.ProviderConfig{
-		SupportVPC: d.Get("support_vpc").(bool),
+		SupportVPC: true,
+	}
+
+	if _, ok := getOrFromEnv(d, "support_vpc", "NCLOUD_SUPPORT_VPC"); !ok {
+		providerConfig.SupportVPC = false
 	}
 
 	// Set site
-	if site, ok := d.GetOk("site"); ok {
+	if site, ok := getOrFromEnv(d, "site", "NCLOUD_SITE"); ok {
 		providerConfig.Site = site.(string)
 
 		switch site {
@@ -220,33 +209,62 @@ func ProviderConfigure(d *schema.ResourceData) (interface{}, error) {
 		providerConfig.SupportVPC = true
 	}
 
+	accessKey, ok := getOrFromEnv(d, "access_key", "NCLOUD_ACCESS_KEY")
+	if !ok {
+		return nil, diag.Errorf("missing provider configuration: ACCESS_KEY")
+	}
+	secretKey, ok := getOrFromEnv(d, "secret_key", "NCLOUD_SECRET_KEY")
+	if !ok {
+		return nil, diag.Errorf("missing provider configuration: SECRET_KEY")
+	}
+	region, ok := getOrFromEnv(d, "region", "NCLOUD_REGION")
+	if !ok {
+		return nil, diag.Errorf("missing provider configuration: REGION")
+	}
+
 	// Set client
 	config := conn.Config{
-		AccessKey: d.Get("access_key").(string),
-		SecretKey: d.Get("secret_key").(string),
-		Region:    d.Get("region").(string),
+		AccessKey: accessKey.(string),
+		SecretKey: secretKey.(string),
+		Region:    region.(string),
 	}
 
 	if client, err := config.Client(); err != nil {
-		return nil, err
+		return nil, diag.FromErr(err)
 	} else {
 		providerConfig.Client = client
 	}
 
 	// Set region
 	if err := conn.SetRegionCache(providerConfig.Client, providerConfig.SupportVPC); err != nil {
-		return nil, err
+		return nil, diag.FromErr(err)
 	}
 
-	if region, ok := d.GetOk("region"); ok && conn.IsValidRegionCode(region.(string)) {
+	if conn.IsValidRegionCode(region.(string)) {
 		os.Setenv("NCLOUD_REGION", region.(string))
 		providerConfig.RegionCode = region.(string)
 		if !providerConfig.SupportVPC {
 			providerConfig.RegionNo = *conn.GetRegionNoByCode(region.(string))
 		}
 	} else {
-		return nil, fmt.Errorf("no region data for region_code `%s`. please change region_code and try again", region)
+		return nil, []diag.Diagnostic{
+			{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("no region data for region_code `%s`. please change region_code and try again", region),
+			},
+		}
 	}
 
 	return &providerConfig, nil
+}
+
+func getOrFromEnv(d *schema.ResourceData, name, env string) (any, bool) {
+	if v, ok := d.GetOk(name); ok {
+		return v, true
+	}
+
+	if v := os.Getenv(env); v != "" {
+		return v, true
+	}
+	return nil, false
 }

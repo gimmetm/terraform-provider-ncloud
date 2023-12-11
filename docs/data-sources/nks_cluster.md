@@ -1,3 +1,8 @@
+---
+subcategory: "Kubernetes Service"
+---
+
+
 # Data Source: ncloud_nks_cluster
 
 Provides a Kubernetes Service cluster data.
@@ -27,7 +32,7 @@ In addition to all arguments above, the following attributes are exported:
 * `id` - Cluster uuid.
 * `endpoint` - Control Plane API address.
 * `lb_private_subnet_no` - Subnet No. for private loadbalancer only.
-* `lb_public_subnet_no` - Subnet No. for public loadbalancer only. (Supported on `SGN`, `JPN` region)
+* `lb_public_subnet_no` - Subnet No. for public loadbalancer only. (Supported on `public`, `gov` site)
 * `subnet_no_list` - Subnet No. list.
 * `public_network` - Public Subnet Network
 * `kube_network_plugin` - Kubernetes network plugin.
@@ -36,9 +41,6 @@ In addition to all arguments above, the following attributes are exported:
   * `XEN` / `RHV`
     * 10 ea : `SVR.VNKS.STAND.C002.M008.NET.SSD.B050.G002`
     * 50 ea : `SVR.VNKS.STAND.C004.M016.NET.SSD.B050.G002`
-  * `KVM`
-    * 10 ea : `SVR.VNKS.STAND.C002.M008.G003`
-    * 50 ea : `SVR.VNKS.STAND.C004.M016.G003`
 * `login_key_name` - Login key name.
 * `zone` - zone Code.
 * `vpc_no` - VPC No.

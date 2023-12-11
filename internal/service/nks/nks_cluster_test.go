@@ -53,9 +53,9 @@ func TestAccResourceNcloudNKSCluster_basic_XEN(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNKSClusterDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNKSClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudNKSClusterDefaultConfig(name, TF_TEST_NKS_LOGIN_KEY, true, nksInfo),
@@ -81,9 +81,9 @@ func TestAccResourceNcloudNKSCluster_basic_KVM(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNKSClusterDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNKSClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudNKSClusterDefaultConfig(name, TF_TEST_NKS_LOGIN_KEY, true, nksInfo),
@@ -108,9 +108,9 @@ func TestAccResourceNcloudNKSCluster_public_network_XEN(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNKSClusterDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNKSClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudNKSClusterPublicNetworkConfig(name, TF_TEST_NKS_LOGIN_KEY, nksInfo),
@@ -130,9 +130,9 @@ func TestAccResourceNcloudNKSCluster_public_network_KVM(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNKSClusterDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNKSClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudNKSClusterPublicNetworkConfig(name, TF_TEST_NKS_LOGIN_KEY, nksInfo),
@@ -153,9 +153,9 @@ func TestAccResourceNcloudNKSCluster_Update_XEN(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNKSClusterDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNKSClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:  testAccResourceNcloudNKSClusterDefaultConfig(name, TF_TEST_NKS_LOGIN_KEY, true, nksInfo),
@@ -182,9 +182,9 @@ func TestAccResourceNcloudNKSCluster_Update_KVM(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckNKSClusterDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckNKSClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:  testAccResourceNcloudNKSClusterDefaultConfig(name, TF_TEST_NKS_LOGIN_KEY, true, nksInfo),
@@ -229,6 +229,7 @@ resource "ncloud_nks_cluster" "cluster" {
     required_claim           = "iss=https://keycloak.ncp.gimmetm.net/realms/nks"
   }
 `, name, nksInfo.ClusterType, nksInfo.K8sVersion, loginKeyName, *nksInfo.PrivateLbSubnetList[0].SubnetNo, nksInfo.HypervisorCode, *nksInfo.PrivateSubnetList[0].SubnetNo, *nksInfo.Vpc.VpcNo, nksInfo.Region, auditLog))
+
 	if !nksInfo.IsFin {
 		b.WriteString(`
   ip_acl_default_action = "deny"
@@ -237,8 +238,16 @@ resource "ncloud_nks_cluster" "cluster" {
     address = "223.130.195.0/24"
     comment = "allow ip"
   }
+  
 `)
 	}
+
+	if nksInfo.needPublicLb {
+		b.WriteString(fmt.Sprintf(`
+  lb_public_subnet_no = %[1]s
+`, *nksInfo.PublicLbSubnetList[0].SubnetNo))
+	}
+
 	b.WriteString(`
 }
 `)
@@ -269,15 +278,29 @@ resource "ncloud_nks_cluster" "cluster" {
     issuer_url                = "https://keycloak.ncp.gimmetm.net/realms/update"
     client_id                 = "update-client"
   }
-}
 `, name, nksInfo.ClusterType, nksInfo.UpgradeK8sVersion, loginKeyName, *nksInfo.PrivateLbSubnetList[0].SubnetNo, nksInfo.HypervisorCode, *nksInfo.PrivateSubnetList[0].SubnetNo, *nksInfo.PrivateSubnetList[1].SubnetNo, *nksInfo.Vpc.VpcNo, nksInfo.Region, auditLog))
+	if !nksInfo.IsFin {
+		b.WriteString(`
+  ip_acl_default_action = "allow"
+  
+`)
+	}
 
+	if nksInfo.needPublicLb {
+		b.WriteString(fmt.Sprintf(`
+  lb_public_subnet_no = %[1]s
+`, *nksInfo.PublicLbSubnetList[0].SubnetNo))
+	}
+
+	b.WriteString(`
+}
+`)
 	return b.String()
 }
 
 func testAccResourceNcloudNKSClusterPublicNetworkConfig(name string, loginKeyName string, nksInfo *NKSTestInfo) string {
-
-	return fmt.Sprintf(`
+	var b bytes.Buffer
+	b.WriteString(fmt.Sprintf(`
 resource "ncloud_nks_cluster" "cluster" {
   name                        = "%[1]s"
   cluster_type                = "%[2]s"
@@ -292,8 +315,18 @@ resource "ncloud_nks_cluster" "cluster" {
   ]
   vpc_no                      = %[8]s
   zone                        = "%[9]s-1"
+`, name, nksInfo.ClusterType, nksInfo.K8sVersion, loginKeyName, nksInfo.HypervisorCode, *nksInfo.PrivateLbSubnetList[0].SubnetNo, *nksInfo.PublicSubnetList[0].SubnetNo, *nksInfo.Vpc.VpcNo, nksInfo.Region))
+
+	if nksInfo.needPublicLb {
+		b.WriteString(fmt.Sprintf(`
+  lb_public_subnet_no = %[1]s
+`, *nksInfo.PublicLbSubnetList[0].SubnetNo))
+	}
+
+	b.WriteString(`
 }
-`, name, nksInfo.ClusterType, nksInfo.K8sVersion, loginKeyName, nksInfo.HypervisorCode, *nksInfo.PrivateLbSubnetList[0].SubnetNo, *nksInfo.PublicSubnetList[0].SubnetNo, *nksInfo.Vpc.VpcNo, nksInfo.Region)
+`)
+	return b.String()
 }
 
 func testAccResourceNcloudNKSClusterDefaultConfigCheck(resourceName string, name string, nksInfo *NKSTestInfo) (check resource.TestCheckFunc) {
@@ -389,31 +422,26 @@ func getRegionAndNKSType() (region string, clusterType string, productType strin
 		clusterType = "SVR.VNKS.STAND.C002.M008.NET.SSD.B050.G002"
 		productType = "SVR.VSVR.STAND.C002.M008.NET.SSD.B050.G002"
 	}
-	k8sVersion = "1.24.10-nks.1"
+	k8sVersion = "1.26.10-nks.1"
 	return
-}
-
-func getInvalidSubnetExpectError() string {
-	apigw := os.Getenv("NCLOUD_API_GW")
-	if strings.Contains(apigw, "gov-ntruss.com") {
-		return "Not found zone"
-	}
-	return "Subnet is undefined"
 }
 
 func getNKSTestInfo(hypervisor string) (*NKSTestInfo, error) {
 
 	nksInfo := &NKSTestInfo{
 		Region:            os.Getenv("NCLOUD_REGION"),
-		K8sVersion:        "1.24.10-nks.1",
-		UpgradeK8sVersion: "1.25.8-nks.1",
+		K8sVersion:        "1.25.15-nks.1",
+		UpgradeK8sVersion: "1.26.10-nks.1",
 		HypervisorCode:    hypervisor,
 	}
 	zoneCode := ncloud.String(fmt.Sprintf("%s-1", nksInfo.Region))
 	nksInfo.IsFin = strings.HasPrefix(nksInfo.Region, "F")
 	nksInfo.IsCaaS = nksInfo.Region[1:2] == "CS"
-	nksInfo.needPublicLb = nksInfo.Region == "JPN" || nksInfo.Region == "SGN"
+	nksInfo.needPublicLb = true
 
+	if nksInfo.IsFin {
+		nksInfo.needPublicLb = false
+	}
 	if hypervisor == "KVM" {
 		switch nksInfo.Region {
 		case "FKR":

@@ -38,17 +38,17 @@ func ResourceNcloudNetworkACLRule() *schema.Resource {
 						"priority": {
 							Type:             schema.TypeInt,
 							Required:         true,
-							ValidateDiagFunc: ToDiagFunc(validation.IntBetween(0, 199)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 199)),
 						},
 						"protocol": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: ToDiagFunc(validation.StringInSlice([]string{"TCP", "UDP", "ICMP"}, false)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"TCP", "UDP", "ICMP"}, false)),
 						},
 						"ip_block": {
 							Type:             schema.TypeString,
 							Optional:         true,
-							ValidateDiagFunc: ToDiagFunc(validation.IsCIDRNetwork(0, 32)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IsCIDRNetwork(0, 32)),
 						},
 						"deny_allow_group_no": {
 							Type:     schema.TypeString,
@@ -57,18 +57,18 @@ func ResourceNcloudNetworkACLRule() *schema.Resource {
 						"rule_action": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: ToDiagFunc(validation.StringInSlice([]string{"ALLOW", "DROP"}, false)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALLOW", "DROP"}, false)),
 						},
 						"port_range": {
 							Type:             schema.TypeString,
 							Optional:         true,
-							ValidateDiagFunc: ToDiagFunc(ValidatePortRange),
+							ValidateDiagFunc: validation.ToDiagFunc(ValidatePortRange),
 							Default:          "",
 						},
 						"description": {
 							Type:             schema.TypeString,
 							Optional:         true,
-							ValidateDiagFunc: ToDiagFunc(validation.StringLenBetween(0, 1000)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 1000)),
 							Default:          "",
 						},
 					},
@@ -83,17 +83,17 @@ func ResourceNcloudNetworkACLRule() *schema.Resource {
 						"priority": {
 							Type:             schema.TypeInt,
 							Required:         true,
-							ValidateDiagFunc: ToDiagFunc(validation.IntBetween(0, 199)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 199)),
 						},
 						"protocol": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: ToDiagFunc(validation.StringInSlice([]string{"TCP", "UDP", "ICMP"}, false)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"TCP", "UDP", "ICMP"}, false)),
 						},
 						"ip_block": {
 							Type:             schema.TypeString,
 							Optional:         true,
-							ValidateDiagFunc: ToDiagFunc(validation.IsCIDRNetwork(0, 32)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IsCIDRNetwork(0, 32)),
 						},
 						"deny_allow_group_no": {
 							Type:     schema.TypeString,
@@ -102,18 +102,18 @@ func ResourceNcloudNetworkACLRule() *schema.Resource {
 						"rule_action": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: ToDiagFunc(validation.StringInSlice([]string{"ALLOW", "DROP"}, false)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALLOW", "DROP"}, false)),
 						},
 						"port_range": {
 							Type:             schema.TypeString,
 							Optional:         true,
-							ValidateDiagFunc: ToDiagFunc(ValidatePortRange),
+							ValidateDiagFunc: validation.ToDiagFunc(ValidatePortRange),
 							Default:          "",
 						},
 						"description": {
 							Type:             schema.TypeString,
 							Optional:         true,
-							ValidateDiagFunc: ToDiagFunc(validation.StringLenBetween(0, 1000)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 1000)),
 							Default:          "",
 						},
 					},
@@ -213,6 +213,8 @@ func resourceNcloudNetworkACLRuleDelete(d *schema.ResourceData, meta interface{}
 	i := d.Get("inbound").(*schema.Set)
 	o := d.Get("outbound").(*schema.Set)
 
+	_ = waitForNcloudNetworkACLRunning(config, d.Id())
+
 	if len(i.List()) > 0 {
 		if err := removeNetworkACLRule(d, config, "inbound", expandRemoveNetworkAclRule(i.List())); err != nil {
 			return err
@@ -242,7 +244,7 @@ func waitForNcloudNetworkACLRunning(config *conn.ProviderConfig, id string) erro
 	}
 
 	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf("Error waiting for Network ACL (%s) to become termintaing: %s", id, err)
+		return fmt.Errorf("error waiting for Network ACL (%s) to become termintaing: %s", id, err)
 	}
 
 	return nil

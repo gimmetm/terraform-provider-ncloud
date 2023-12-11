@@ -83,6 +83,44 @@ func DataSourceNcloudNKSNodePool() *schema.Resource {
 					},
 				},
 			},
+			"label": {
+				Type:       schema.TypeSet,
+				Optional:   true,
+				ConfigMode: schema.SchemaConfigModeAttr,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
+			"taint": {
+				Type:       schema.TypeSet,
+				Optional:   true,
+				ConfigMode: schema.SchemaConfigModeAttr,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"effect": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"key": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 			"nodes": {
 				Type:     schema.TypeList,
 				Computed: true,

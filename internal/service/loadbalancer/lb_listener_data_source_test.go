@@ -15,8 +15,8 @@ func TestAccDataSourceNcloudLbListener_basic(t *testing.T) {
 	dataName := "data.ncloud_lb_listener.test"
 	resourceName := "ncloud_lb_listener.test"
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudLbListenerConfig(lbName),
@@ -33,10 +33,10 @@ func TestAccDataSourceNcloudLbListener_basic(t *testing.T) {
 }
 
 func testAccDataSourceNcloudLbListenerConfig(name string) string {
-	return testAccResourceNcloudLbListenerConfig(name) + fmt.Sprintf(`
+	return testAccResourceNcloudLbListenerConfig(name) + `
 data "ncloud_lb_listener" "test" {
 	id = ncloud_lb_listener.test.listener_no
 	load_balancer_no = ncloud_lb.test.load_balancer_no
 }
-`)
+`
 }

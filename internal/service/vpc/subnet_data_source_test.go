@@ -17,8 +17,8 @@ func TestAccDataSourceNcloudSubnet(t *testing.T) {
 	dataName := "data.ncloud_subnet.by_id"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudSubnetConfig(name, cidr),

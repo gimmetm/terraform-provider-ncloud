@@ -12,6 +12,8 @@ import (
 )
 
 // ignore test : should use real access_control_group_configuration_no
+//
+//nolint:unused
 func testAccDataSourceNcloudAccessControlRulesBasic(t *testing.T) {
 	testId := os.Getenv("TEST_ID")
 	if testId == "" {
@@ -20,8 +22,8 @@ func testAccDataSourceNcloudAccessControlRulesBasic(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudAccessControlRulesConfig(testId),
@@ -33,6 +35,7 @@ func testAccDataSourceNcloudAccessControlRulesBasic(t *testing.T) {
 	})
 }
 
+//nolint:unused
 func testAccDataSourceNcloudAccessControlRulesConfig(testConfigNo string) string {
 	return fmt.Sprintf(`
 data "ncloud_access_control_rules" "test" {

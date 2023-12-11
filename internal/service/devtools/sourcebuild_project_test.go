@@ -24,9 +24,9 @@ func TestAccResourceNcloudSourcebuildProject_basic(t *testing.T) {
 	resourceName := "ncloud_sourcebuild_project.test-project"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckSourcebuildProjectDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckSourcebuildProjectDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudSourcebuildConfig(name, repoName),
@@ -51,9 +51,9 @@ func TestAccResourceNcloudSourcebuildProject_update(t *testing.T) {
 	resourceName := "ncloud_sourcebuild_project.test-project"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckSourcebuildProjectDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckSourcebuildProjectDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudSourcebuildConfig(name, repoName),
@@ -185,7 +185,7 @@ resource "ncloud_sourcebuild_project" "test-project" {
 		}
 	}
 	build_command {
-		pre_build   = [""]
+		pre_build   = []
 		in_build = ["pwd", "ls"]
 		post_build  = ["pwd", "ls"]
 	}

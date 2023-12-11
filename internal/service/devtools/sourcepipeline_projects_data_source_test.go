@@ -1,7 +1,6 @@
 package devtools_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -11,8 +10,8 @@ import (
 
 func TestAccDataSourceNcloudSourcePipelineProjects_classic_basic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(false),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ClassicProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudSourcePipelineProjectsConfig(),
@@ -25,8 +24,8 @@ func TestAccDataSourceNcloudSourcePipelineProjects_classic_basic(t *testing.T) {
 }
 func TestAccDataSourceNcloudSourcePipelineProjects_vpc_basic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudSourcePipelineProjectsConfig(),
@@ -39,8 +38,8 @@ func TestAccDataSourceNcloudSourcePipelineProjects_vpc_basic(t *testing.T) {
 }
 
 func testAccDataSourceNcloudSourcePipelineProjectsConfig() string {
-	return fmt.Sprintf(`
+	return `
 data "ncloud_sourcepipeline_projects" "projects" {
 }
-`)
+`
 }

@@ -9,11 +9,11 @@ import (
 	. "github.com/terraform-providers/terraform-provider-ncloud/internal/acctest"
 )
 
-func TestAccDataSourceNcloudSourceDeployScenario(t *testing.T) {
+func TestAccDataSourceNcloudSourceDeploySingleScenario(t *testing.T) {
 	stageNameSvr := GetTestSourceDeployScenarioName() + "svr"
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudSourceDeployScenarioConfig(stageNameSvr),

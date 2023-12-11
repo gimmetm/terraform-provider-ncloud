@@ -39,7 +39,7 @@ func ResourceNcloudSourcePipeline() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				ValidateDiagFunc: ToDiagFunc(validation.All(
+				ValidateDiagFunc: validation.ToDiagFunc(validation.All(
 					validation.StringLenBetween(1, 30),
 					validation.StringMatch(regexp.MustCompile(`^[A-Za-z0-9_-]+$`), "Composed of alphabets, numbers, hyphen (-) and underbar (_)"),
 				)),
@@ -47,7 +47,7 @@ func ResourceNcloudSourcePipeline() *schema.Resource {
 			"description": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.StringLenBetween(0, 500)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 500)),
 			},
 			"task": {
 				Type:     schema.TypeList,
@@ -57,7 +57,7 @@ func ResourceNcloudSourcePipeline() *schema.Resource {
 						"name": {
 							Type:     schema.TypeString,
 							Required: true,
-							ValidateDiagFunc: ToDiagFunc(validation.All(
+							ValidateDiagFunc: validation.ToDiagFunc(validation.All(
 								validation.StringLenBetween(1, 50),
 								validation.StringMatch(regexp.MustCompile(`^[A-Za-z0-9_-]+$`), "Composed of alphabets, numbers, hyphen (-) and underbar (_)"),
 							)),
@@ -65,7 +65,7 @@ func ResourceNcloudSourcePipeline() *schema.Resource {
 						"type": {
 							Type:     schema.TypeString,
 							Required: true,
-							ValidateDiagFunc: ToDiagFunc(validation.StringInSlice([]string{
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 								"SourceBuild", "SourceDeploy",
 							}, false)),
 						},
@@ -133,7 +133,8 @@ func ResourceNcloudSourcePipeline() *schema.Resource {
 							Type:     schema.TypeList,
 							Required: true,
 							Elem: &schema.Schema{
-								Type: schema.TypeString,
+								Type:             schema.TypeString,
+								ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 							},
 						},
 					},
@@ -475,6 +476,10 @@ func makeClassicPipelineTaskParams(d *schema.ResourceData) ([]*sourcepipeline.Cr
 			return nil, diag.FromErr(NotSupportClassic("Invalid argument: \"SourceDeploy\" task "))
 		}
 
+		err := ValidateEmptyStringElement(d.Get(prefix + "linked_tasks").([]interface{}))
+		if err != nil {
+			return nil, diag.Errorf("task.linkd_tasks cannot contain an empty string element")
+		}
 		pipelineTaskParams = append(pipelineTaskParams, &sourcepipeline.CreateProjectTasks{
 			Name:        ncloud.String(d.Get(prefix + "name").(string)),
 			Type_:       ncloud.String(d.Get(prefix + "type").(string)),
@@ -517,6 +522,10 @@ func makeVpcPipelineTaskParams(d *schema.ResourceData) ([]*vsourcepipeline.Creat
 			}
 		}
 
+		err := ValidateEmptyStringElement(d.Get(prefix + "linked_tasks").([]interface{}))
+		if err != nil {
+			return nil, diag.Errorf("task.linkd_tasks cannot contain an empty string element")
+		}
 		pipelineTaskParams = append(pipelineTaskParams, &vsourcepipeline.CreateProjectTasks{
 			Name:        ncloud.String(d.Get(prefix + "name").(string)),
 			Type_:       ncloud.String(d.Get(prefix + "type").(string)),
@@ -766,7 +775,7 @@ func checkVpcDeployTaskConfig(taskConfig *PipelineTaskConfig, deployTarget *vsou
 		return diag.Diagnostic{
 			Severity: diag.Warning,
 			Summary:  "Deploy target configuration have changed in SourceDeploy Project.",
-			Detail:   fmt.Sprintf("Linked manifest file has changed from %s to %s. Please check.", *taskConfig.Target.Info.FullManifest, strings.Join(ncloud.StringListValue(*&deployTarget.Config.Manifest.Path), " / ")),
+			Detail:   fmt.Sprintf("Linked manifest file has changed from %s to %s. Please check.", *taskConfig.Target.Info.FullManifest, strings.Join(ncloud.StringListValue(deployTarget.Config.Manifest.Path), " / ")),
 		}
 	}
 	return diag.Diagnostic{}

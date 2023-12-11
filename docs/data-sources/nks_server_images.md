@@ -1,3 +1,8 @@
+---
+subcategory: "Kubernetes Service"
+---
+
+
 # Data Source: ncloud_nks_server_images
 
 Provides list of available Kubernetes Nodepool ServerImages.
@@ -21,7 +26,6 @@ data "ncloud_nks_server_images" "ubuntu20" {
 
 The following arguments are supported:
 
-* `hypervisor_code` - (Optional) Hypervisor code. (Default `XEN`)
 * `filter` - (Optional) Custom filter block as described below.
   * `name` - (Required) The name of the field to filter by.
   * `values` - (Required) Set of values that are accepted for the given field.

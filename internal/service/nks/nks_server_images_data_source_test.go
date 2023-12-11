@@ -1,7 +1,6 @@
 package nks_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -13,8 +12,8 @@ func TestAccDataSourceNcloudNKSServerImages(t *testing.T) {
 	dataName := "data.ncloud_nks_server_images.images"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudNKSServerImagesConfig,
@@ -30,8 +29,8 @@ func TestAccDataSourceNcloudNKSServerImagesFilter(t *testing.T) {
 	dataName := "data.ncloud_nks_server_images.filter"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudNKSServerImagestWithFilterConfig(),
@@ -49,12 +48,12 @@ data "ncloud_nks_server_images" "images" {}
 `
 
 func testAccDataSourceNcloudNKSServerImagestWithFilterConfig() string {
-	return fmt.Sprintf(`
+	return `
 data "ncloud_nks_server_images" "filter"{
   filter {
     name = "label"
     values = ["ubuntu-20.04-64-server"]
   }
 }
-`)
+`
 }

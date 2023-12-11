@@ -18,7 +18,6 @@ import (
 
 	. "github.com/terraform-providers/terraform-provider-ncloud/internal/common"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/conn"
-	. "github.com/terraform-providers/terraform-provider-ncloud/internal/verify"
 )
 
 const (
@@ -74,7 +73,7 @@ func ResourceNcloudNKSCluster() *schema.Resource {
 				Type:             schema.TypeString,
 				ForceNew:         true,
 				Required:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.StringLenBetween(3, 20)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(3, 20)),
 			},
 			"cluster_type": {
 				Type:     schema.TypeString,
@@ -197,7 +196,7 @@ func ResourceNcloudNKSCluster() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Computed:         true,
-				ValidateDiagFunc: ToDiagFunc(validation.StringInSlice([]string{"allow", "deny"}, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"allow", "deny"}, false)),
 			},
 			"ip_acl": {
 				Type:       schema.TypeSet,
@@ -644,7 +643,7 @@ func getSubnetDiff(oldList interface{}, newList interface{}) (added []*int32, re
 		newMap[*v] += 1
 	}
 
-	for subnet, _ := range oldMap {
+	for subnet := range oldMap {
 		if _, exist := newMap[subnet]; !exist {
 			intV, err := strconv.Atoi(subnet)
 			if err == nil {
@@ -653,7 +652,7 @@ func getSubnetDiff(oldList interface{}, newList interface{}) (added []*int32, re
 		}
 	}
 
-	for subnet, _ := range newMap {
+	for subnet := range newMap {
 		if _, exist := oldMap[subnet]; !exist {
 			intV, err := strconv.Atoi(subnet)
 			if err == nil {

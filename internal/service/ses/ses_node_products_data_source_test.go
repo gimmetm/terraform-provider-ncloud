@@ -16,8 +16,8 @@ func TestAccDataSourceNcloudSESNodeProductCodes(t *testing.T) {
 	testName := "ses-product-test"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudSESNodeProductConfig(testName, region),

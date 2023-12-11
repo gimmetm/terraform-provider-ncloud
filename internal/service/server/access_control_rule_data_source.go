@@ -39,7 +39,7 @@ func DataSourceNcloudAccessControlRule() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: verify.ToDiagFunc(validation.StringIsValidRegExp),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsValidRegExp),
 				Description:      "A regex string to apply to the source access control rule list returned by ncloud",
 			},
 			"source_ip": {
@@ -117,9 +117,7 @@ func dataSourceNcloudAccessControlRuleRead(d *schema.ResourceData, meta interfac
 			if err != nil {
 				return err
 			}
-			for _, rule := range resp.AccessControlRuleList {
-				allAccessControlRuleList = append(allAccessControlRuleList, rule)
-			}
+			allAccessControlRuleList = append(allAccessControlRuleList, resp.AccessControlRuleList...)
 		}
 	} else {
 		groupConfigNo := configNo.(string)
@@ -127,9 +125,7 @@ func dataSourceNcloudAccessControlRuleRead(d *schema.ResourceData, meta interfac
 		if err != nil {
 			return err
 		}
-		for _, rule := range resp.AccessControlRuleList {
-			allAccessControlRuleList = append(allAccessControlRuleList, rule)
-		}
+		allAccessControlRuleList = append(allAccessControlRuleList, resp.AccessControlRuleList...)
 	}
 
 	var filteredAccessControlRuleList []*server.AccessControlRule

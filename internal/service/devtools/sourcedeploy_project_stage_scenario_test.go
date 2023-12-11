@@ -45,9 +45,9 @@ func TestAccResourceNcloudSourceDeployScenario_basic(t *testing.T) {
 	resourceNameObjNormal := "ncloud_sourcedeploy_project_stage_scenario.test-scenario-obj-normal"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { TestAccPreCheck(t) },
-		Providers:    GetTestAccProviders(true),
-		CheckDestroy: testAccCheckSourceDeployScenarioDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckSourceDeployScenarioDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceNcloudSourceDeployScenarioConfig(

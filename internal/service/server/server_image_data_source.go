@@ -64,7 +64,7 @@ func DataSourceNcloudServerImage() *schema.Resource {
 			"product_name_regex": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: verify.ToDiagFunc(validation.StringIsValidRegExp),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsValidRegExp),
 				Deprecated:       "use `filter` instead",
 			},
 			"exclusion_product_code": {
@@ -102,7 +102,7 @@ func getServerImageProductListFiltered(d *schema.ResourceData, config *conn.Prov
 	var resources []map[string]interface{}
 	var err error
 
-	if config.SupportVPC == true {
+	if config.SupportVPC {
 		resources, err = getVpcServerImageProductList(d, config)
 	} else {
 		resources, err = getClassicServerImageProductList(d, config)

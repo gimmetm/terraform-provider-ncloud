@@ -15,7 +15,6 @@ import (
 
 	. "github.com/terraform-providers/terraform-provider-ncloud/internal/common"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/conn"
-	"github.com/terraform-providers/terraform-provider-ncloud/internal/verify"
 	"github.com/terraform-providers/terraform-provider-ncloud/internal/zone"
 )
 
@@ -43,14 +42,14 @@ func ResourceNcloudPortForwadingRule() *schema.Resource {
 				Type:             schema.TypeInt,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: verify.ToDiagFunc(validation.IntBetween(1024, 65534)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1024, 65534)),
 				Description:      "External port for port forwarding",
 			},
 			"port_forwarding_internal_port": {
 				Type:             schema.TypeInt,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: verify.ToDiagFunc(validation.IntInSlice([]int{22, 3389})), // [Linux : 22 |Windows : 3389]
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntInSlice([]int{22, 3389})), // [Linux : 22 |Windows : 3389]
 				Description:      "Internal port for port forwarding. Only the following ports are available. [Linux: `22` | Windows: `3389`]",
 			},
 			"port_forwarding_configuration_no": {
@@ -93,6 +92,10 @@ func resourceNcloudPortForwardingRuleCreate(d *schema.ResourceData, meta interfa
 
 	serverInstanceNo := d.Get("server_instance_no").(string)
 	zoneNo, err := getServerZoneNo(config, serverInstanceNo)
+	if err != nil {
+		return err
+	}
+
 	newPortForwardingRuleId := PortForwardingRuleId(portForwardingConfigurationNo, zoneNo, portForwardingExternalPort)
 	log.Printf("[DEBUG] AddPortForwardingRules newPortForwardingRuleId: %s", newPortForwardingRuleId)
 

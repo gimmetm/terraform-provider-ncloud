@@ -15,8 +15,8 @@ func TestAccDataSourceNcloudLb_basic(t *testing.T) {
 	dataName := "data.ncloud_lb.test"
 	resourceName := "ncloud_lb.test"
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudLbConfig(name),
@@ -37,9 +37,9 @@ func TestAccDataSourceNcloudLb_basic(t *testing.T) {
 }
 
 func testAccDataSourceNcloudLbConfig(name string) string {
-	return testAccResourceNcloudLbConfig(name) + fmt.Sprintf(`
+	return testAccResourceNcloudLbConfig(name) + `
 data "ncloud_lb" "test" {
 	id = ncloud_lb.test.load_balancer_no
 }
-`)
+`
 }

@@ -1,7 +1,6 @@
 package devtools_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -11,8 +10,8 @@ import (
 
 func TestAccDataSourceNcloudSourceDeployProjects(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { TestAccPreCheck(t) },
-		Providers: GetTestAccProviders(true),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourceNcloudSourceDeployProjectsConfig(),
@@ -25,8 +24,8 @@ func TestAccDataSourceNcloudSourceDeployProjects(t *testing.T) {
 }
 
 func testAccDataSourceNcloudSourceDeployProjectsConfig() string {
-	return fmt.Sprintf(`
+	return `
 data "ncloud_sourcedeploy_projects" "projects" {
 }
-`)
+`
 }

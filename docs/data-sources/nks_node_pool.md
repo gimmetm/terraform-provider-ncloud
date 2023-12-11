@@ -1,3 +1,8 @@
+---
+subcategory: "Kubernetes Service"
+---
+
+
 # Data Source: ncloud_nks_node_pool
 
 Provides a Kubernetes Service nodepool data.
@@ -32,8 +37,6 @@ In addition to all arguments above, the following attributes are exported:
 * `node_count` - Number of nodes.
 * `product_code` - Product code.
 * `software_code` - Server image code.
-* `server_spec_code` - Server spec code. 
-* `storage_size` -Default storage size.
 * `autoscale`
   * `enable` - Auto scaling availability.
   * `max` - Maximum number of nodes available for auto scaling.

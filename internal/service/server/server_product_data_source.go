@@ -37,7 +37,7 @@ func DataSourceNcloudServerProduct() *schema.Resource {
 			"internet_line_type_code": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: verify.ToDiagFunc(validation.StringInSlice([]string{"PUBLC", "GLBL"}, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"PUBLC", "GLBL"}, false)),
 				Deprecated:       "This parameter is no longer used.",
 			},
 			"filter": DataSourceFiltersSchema(),
@@ -83,7 +83,7 @@ func DataSourceNcloudServerProduct() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: verify.ToDiagFunc(validation.StringIsValidRegExp),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsValidRegExp),
 				Deprecated:       "use filter instead",
 			},
 			"exclusion_product_code": {
@@ -115,7 +115,7 @@ func getServerProductListFiltered(d *schema.ResourceData, config *conn.ProviderC
 	var resources []map[string]interface{}
 	var err error
 
-	if config.SupportVPC == true {
+	if config.SupportVPC {
 		resources, err = getVpcServerProductList(d, config)
 	} else {
 		resources, err = getClassicServerProductList(d, config)
